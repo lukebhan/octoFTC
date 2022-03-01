@@ -95,33 +95,49 @@ env = gym.make('octorotor-v0', OctorotorParams=OctorotorParams)
 def err(state):
     return math.sqrt(state[0]**2 + state[1]**2)
 
-def run():
-    xarr = []
-    yarr = []
-    xrefarr = []
-    yrefarr = []
-    rpm = []
-    tau = []
+def run(faultVal):
+    t1xarr = []
+    t1yarr = []
+    t1running_err = 0
+
+    t2xarr = []
+    t2yarr = []
+    t2running_err = 0
+
+    t3xarr = []
+    t3yarr = []
+    t3running_err = 0
+
+    model = PPO.load('model_no_fault', env=env)
+
     end =False 
-    model = PPO.load("tmp/model_40000_steps", env=env)
-    obs  = env.reset()
+    obs  = env.reset(faultVal)
     #obs  = env.reset()
-    action = [0]
-    running_err = 0
+    action = [0, 0]
     count = 0
     reward = 0
+    traj = 0
     while not end:
-        action = model.predict(obs)[0]
+        action = model.predict(obs, deterministic=True)[0]
         state, rew, end, prints = env.step(action)
-        running_err += prints["errors"]
-        xarr.append(prints["x"])
-        yarr.append(prints["y"])
-        rpm.append(prints["motor"][2])
+        traj = prints["traj"]
+        if traj == 0:
+            t1running_err += prints["errors"]
+            t1xarr.append(prints["x"])
+            t1yarr.append(prints["y"])
+        elif traj == 1:
+            t2running_err += prints["errors"]
+            t2xarr.append(prints["x"])
+            t2yarr.append(prints["y"])
+        elif traj == 2:
+            t3running_err += prints["errors"]
+            t3xarr.append(prints["x"])
+            t3yarr.append(prints["y"])
         count += 1
         reward += rew
     print(count)
     print(reward)
-    return xarr, yarr, running_err, rpm
+    return t1running_err, t1xarr, t1yarr, t2running_err, t2xarr, t2yarr, t3running_err, t3xarr, t3yarr
 
 def save2darr(arr, filename):
     f = open(filename, 'w')
@@ -131,19 +147,40 @@ def save2darr(arr, filename):
         f.write("\n")
     f.close()
 
-x_runs = []
-y_runs = []
 fault_val = []
-errors = []
+t1x = []
+t1y = []
+t1e = []
+t2x = []
+t2y = []
+t2e = []
+t3x = []
+t3y = []
+t3e = []
 rpmarr = []
 if __name__ == "__main__":
+    val = 0
     for i in range(2):
         print(i)
-        xtmp, ytmp, errtmp, rpm= run()
-        x_runs.append(xtmp)
-        y_runs.append(ytmp)
-        errors.append(errtmp)
+        t1running, t1xval, t1yval, t2running, t2xval, t2yval, t3running, t3xval, t3yval = run(val)
+        fault_val.append(val)
+        t1x.append(t1xval)
+        t1y.append(t1yval)
+        t2x.append(t2xval)
+        t2y.append(t2yval)
+        t3x.append(t3xval)
+        t3y.append(t3yval)
+        t1e.append(t1running)
+        t2e.append(t2running)
+        t3e.append(t3running)
+    save2darr(t1x, "t1x")
+    save2darr(t1y, "t1y")
+    np.savetxt("t1error", t1e)
 
-    save2darr(x_runs, "x_runs")
-    save2darr(y_runs, "y_runs")
-    np.savetxt("errors", errors)
+    save2darr(t2x, "t2x")
+    save2darr(t2y, "t2y")
+    np.savetxt("t2error", t2e)
+
+    save2darr(t3x, "t3x")
+    save2darr(t3y, "t3y")
+    np.savetxt("t3error", t3e)
