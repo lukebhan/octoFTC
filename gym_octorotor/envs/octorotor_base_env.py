@@ -128,13 +128,18 @@ class OctorotorBaseEnv(gym.Env):
         self.eulererrors = [self.state[3] - self.psiref[0], self.state[4]-self.psiref[1], self.state[5]-self.psiref[2]]
         state = np.append(self.errors, self.eulererrors)
         state = np.append(state, self.loe[self.faultIndex])
-        reward= -errors
+        error = math.sqrt((self.xref-self.state[0])*(self.xref-self.state[0]) + (self.yref-self.state[1]) * (self.yref-self.state[1]))
+        if error > 100:
+            reward= -1000
+        else:
+            reward = -errors
         return state, reward, finish, {"xref": self.xref, "yref": self.yref, "x": self.state[0], "y": self.state[1], "motor": self.omega, "errors": errors, "traj":self.traj}
 
     def reset(self):
         # reset trajectories
         # ang velo is 700
         maxVal = 700
+        #self.loe = [0.8, 0.85, 0.9, 0.95, 1]
         self.loe = [0.8, 0.85, 0.9, 0.95, 1]
         self.brokenMotor = 0
         self.faultIndex = np.random.randint(0, 4)
@@ -253,9 +258,9 @@ class OctorotorBaseEnv(gym.Env):
             self.yrefarr = pd.read_csv("../Paths/yrefEtraj.csv", header=None).iloc[:, 1]
 
     def terminate(self):
-        #dist = self.dist(self.state[0], self.finalx, self.state[1], self.finaly)
-        #if dist < 1:
-            #return True
+        error = math.sqrt((self.xref-self.state[0])*(self.xref-self.state[0]) + (self.yref-self.state[1]) * (self.yref-self.state[1]))
+        if error > 100: 
+            return True
         if self.traj == 0 and self.curTime > 43:
             self.traj = 1
             self.resetNoTraj(self.faultVal)
