@@ -30,8 +30,8 @@ class OctorotorBaseEnv(gym.Env):
         # Octorotor Params
         self.octorotor = Octocopter(OctorotorParams)
         self.state = self.octorotor.get_state()
-        self.xrefarr = pd.read_csv("../Paths/xrefZigtraj.csv", header=None).iloc[:, 1]
-        self.yrefarr = pd.read_csv("../Paths/yrefZigtraj.csv", header=None).iloc[:, 1]
+        self.xrefarr = pd.read_csv(self.octorotor.xzigpath, header=None).iloc[:, 1]
+        self.yrefarr = pd.read_csv(self.octorotor.yzigpath, header=None).iloc[:, 1]
         self.allocation = ControlAllocation(OctorotorParams)
         self.faultVal = OctorotorParams["resistance"]
         self.dt = OctorotorParams["dt"]
@@ -84,12 +84,20 @@ class OctorotorBaseEnv(gym.Env):
 
     def getWaypoint(self):
         self.curTime += 0.01
-        if np.isclose(self.curTime-self.prevTime,0.5, 1e-9) and self.stepCount < len(self.xrefarr):
+        #if np.isclose(self.curTime-self.prevTime,0.5, 1e-9) and self.stepCount < len(self.xrefarr):
+        #    self.prevTime = self.curTime
+        #    self.xref = self.xrefarr[self.stepCount]
+        #    self.yref = self.yrefarr[self.stepCount]
+        #    self.stepCount += 1
+        #    if self.stepCount == 5:
+        # self.motor.update_r(self.faultVal, self.brokenMotor)
+        error = np.sqrt((self.xref-self.state[0])**2 + (self.yref -self.state[1])**2 + (self.zref-self.state[2])**2)
+        if error < 0.3 and self.stepCount < len(self.xrefarr):
             self.prevTime = self.curTime
             self.xref = self.xrefarr[self.stepCount]
             self.yref = self.yrefarr[self.stepCount]
             self.stepCount += 1
-            if self.stepCount == 5:
+            if self.stepCount = 5:
                 self.motor.update_r(self.faultVal, self.brokenMotor)
 
     def step(self, action):
@@ -113,8 +121,8 @@ class OctorotorBaseEnv(gym.Env):
             
             # Controller impact
             if self.stepCount >= 5:
-                self.psiref[1] += action[1]/5
-                self.psiref[0] += action[0]/5
+                #self.psiref[1] += action[1]/5
+                #self.psiref[0] += action[0]/5
                 min_ang = -12*math.pi/180
                 max_ang = 12*math.pi/180
                 self.psiref[1] = min(max(min_ang, self.psiref[1]), max_ang)
@@ -141,8 +149,9 @@ class OctorotorBaseEnv(gym.Env):
         maxVal = 700
         #self.loe = [0.8, 0.85, 0.9, 0.95, 1]
         self.loe = [0.8, 0.85, 0.9, 0.95, 1]
-        self.brokenMotor = 0
+        self.brokenMotor = 6
         self.faultIndex = np.random.randint(0, 4)
+        self.faultIndex = 0
         faultVal = maxVal * self.loe[self.faultIndex]
 
         self.traj = 0
@@ -248,14 +257,14 @@ class OctorotorBaseEnv(gym.Env):
 
     def updateTraj(self):
         if self.traj == 0:
-            self.xrefarr = pd.read_csv("../Paths/xrefZigtraj.csv", header=None).iloc[:, 1]
-            self.yrefarr = pd.read_csv("../Paths/yrefZigtraj.csv", header=None).iloc[:, 1]
+            self.xrefarr = pd.read_csv(self.octorotor.xzigpath, header=None).iloc[:, 1]
+            self.yrefarr = pd.read_csv(self.octorotor.yzigpath, header=None).iloc[:, 1]
         elif self.traj == 1:
-            self.xrefarr = pd.read_csv("../Paths/xrefCirctraj.csv", header=None).iloc[:, 1]
-            self.yrefarr = pd.read_csv("../Paths/yrefCirctraj.csv", header=None).iloc[:, 1]
+            self.xrefarr = pd.read_csv(self.octorotor.xcircpath, header=None).iloc[:, 1]
+            self.yrefarr = pd.read_csv(self.octorotor.ycircpath, header=None).iloc[:, 1]
         elif self.traj == 2:
-            self.xrefarr = pd.read_csv("../Paths/xrefEtraj.csv", header=None).iloc[:, 1]
-            self.yrefarr = pd.read_csv("../Paths/yrefEtraj.csv", header=None).iloc[:, 1]
+            self.xrefarr = pd.read_csv(self.octorotor.xepath, header=None).iloc[:, 1]
+            self.yrefarr = pd.read_csv(self.octorotor.yepath, header=None).iloc[:, 1]
 
     def terminate(self):
         error = math.sqrt((self.xref-self.state[0])*(self.xref-self.state[0]) + (self.yref-self.state[1]) * (self.yref-self.state[1]))

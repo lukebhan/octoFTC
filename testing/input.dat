@@ -1,0 +1,31 @@
+# Input file for Octorotor Simulations
+# Written By Luke Bhan
+# comments are denoted with a #
+
+
+mode=test # Possible modes are train and test
+
+save_path=dir # save path for all our results
+trajectories=all # options are all, zigzag, Etraj, and circle. All will run all three
+fault_mag=0.8 # loe in terms of percent. 1=100%. Must set for testing mode. For training mode, only applies if fault_random=false
+fault_motor=1 # motor that contains the fault. Values are 1-8 and correspond in clockwise direction from +y. See diagram for positioning
+#         1
+#     8       2
+# 7               3
+#     6       4
+#         5
+
+# Only available in testing mode
+model=true # true if we want to test a model, false if we want pid testing
+simulations=1 # number of sims. If > 1, we will only save rewards
+save_rew=true # save rewards
+save_pos=true # save position
+save_torques=true # save torques
+
+# Training mode
+iterations=1 # of iterations for training
+fault_random=true # randomize fault magnitudes
+training_algo=ppo  # training algorithm
+
+
+

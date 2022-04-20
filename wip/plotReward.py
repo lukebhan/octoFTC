@@ -13,9 +13,8 @@ with open('tmp/monitor.csv') as f:
         else:
             val = line.split(",")
             line=f.readline()
-            if -float(val[0])  < 1e4:
-                arr.append(float(val[0]))
-                arr2.append(np.mean(arr[-15:]))
+            arr.append(float(val[0]))
+            arr2.append(np.mean(arr[-15:]))
 
 
 plt.plot(np.array(arr))

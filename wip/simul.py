@@ -150,5 +150,5 @@ if __name__ == "__main__":
 
     env=Monitor(env, log_dir)
     callback = SaveOnBestTrainingRewardCallback(check_freq=10000, log_dir= log_dir)
-    model = PPO.load('model_no_fault', env=env)
-    model.learn(500000, callback=callback)
+    model = PPO('MlpPolicy', env=env, verbose = 1)
+    model.learn(1000000, callback=callback)

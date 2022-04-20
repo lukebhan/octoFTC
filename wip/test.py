@@ -108,17 +108,17 @@ def run(faultVal):
     t3yarr = []
     t3running_err = 0
 
-    model = PPO.load('model_no_fault', env=env)
+    model = PPO.load('motor6/best_model', env=env)
 
     end =False 
-    obs  = env.reset(faultVal)
+    obs  = env.reset()
     #obs  = env.reset()
     action = [0, 0]
     count = 0
     reward = 0
     traj = 0
     while not end:
-        action = model.predict(obs, deterministic=True)[0]
+        action = model.predict(obs)[0]
         state, rew, end, prints = env.step(action)
         traj = prints["traj"]
         if traj == 0:
